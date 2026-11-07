@@ -1,0 +1,37 @@
+project:
+  name: "Spneumoniae-Core-Analysis-ST-context-aware"
+  run_id: null
+
+inputs:
+  metadata: "/Users/stan/GitHub/snp2cluster-py-public/biorxiv/data/ghana-spneumo-study/Genome_Pneumo_Metadata.csv"
+  snp_matrix: "/Users/stan/GitHub/snp2cluster-py-public/biorxiv/data/ghana-spneumo-study/snps.coresites.01.SNPmatrix.cleaned_without_S158.csv"
+  mlst_profile: "/Users/stan/GitHub/snp2cluster-py-public/biorxiv/data/ghana-spneumo-study/Genome_Pneumo_Metadata.csv"
+
+columns:
+  sample_id: IDs
+  sequence_type: ST
+  st_sample_id: IDs
+
+variables:
+  main_var: Community
+  var_01: ST
+  var_02: SamplingDate
+
+analysis:
+  cluster_type: "Core"        # Core or Transmission
+  transmission_level: "Community"      # Facility, Area, Community
+  core_cluster_context: [ST] # Global , ST, MainVar, SecondaryVar etc.
+  snp_cutoff: 12
+  days_cutoff: 45
+  n_bootstraps: 500
+  random_seed: 42
+  date_format: "mdy" # "ymd"
+  max_k: null
+  engine: r_compatible
+
+
+outputs:
+  out_dir: "runs"
+  generate_excel: true
+  generate_figures: true
+  generate_html_report: true

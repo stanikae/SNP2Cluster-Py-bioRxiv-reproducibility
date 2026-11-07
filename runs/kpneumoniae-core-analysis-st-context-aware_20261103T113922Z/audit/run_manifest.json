@@ -1,0 +1,43 @@
+{
+  "tool": "SNP2Cluster-Py",
+  "version": "1.1.0",
+  "project_name": "Kpneumoniae-Core-Analysis-ST-context-aware",
+  "run_directory": "runs/kpneumoniae-core-analysis-st-context-aware_20261103T113922Z",
+  "timestamp_utc": "2026-11-03T11:39:22.142561+00:00",
+  "python_version": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:11:29) [Clang 20.1.8 ]",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "input_files": {
+    "metadata": "/Users/stan/GitHub/snp2cluster-py-public/biorxiv/data/bgerms_study_metadata_klepp.csv",
+    "snp_matrix": "/Users/stan/GitHub/snp2cluster-py-public/biorxiv/data/klepp-snp-matrices/klepp-combined_coreSNPmatrix.co.csv",
+    "mlst_profile": "/Users/stan/GitHub/snp2cluster-py-public/biorxiv/data/bgerms_study_metadata_klepp.csv"
+  },
+  "columns": {
+    "sample_id": "sampleid",
+    "sequence_type": "st_type",
+    "st_sample_id": "sampleid"
+  },
+  "analysis_parameters": {
+    "cluster_type": "Core",
+    "transmission_level": "Facility",
+    "core_cluster_context": [
+      "ST"
+    ],
+    "snp_cutoff": 11,
+    "days_cutoff": 14,
+    "n_bootstraps": 500,
+    "random_seed": 42,
+    "date_format": "ymd",
+    "max_k": null,
+    "engine": "r_compatible"
+  },
+  "validation_messages": [],
+  "dependency_versions": {
+    "pandas": "3.0.6",
+    "numpy": "2.5.3",
+    "sklearn": "1.9.1",
+    "scipy": "1.18.1",
+    "networkx": "3.7",
+    "matplotlib": "3.11.2",
+    "seaborn": "0.13.2"
+  }
+}

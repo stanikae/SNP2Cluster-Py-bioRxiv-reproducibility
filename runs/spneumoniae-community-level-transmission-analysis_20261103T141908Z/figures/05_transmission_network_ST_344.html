@@ -1,0 +1,436 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 100vh;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+    <style>
+        #transmission-network-panel {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 1000;
+            width: 300px;
+            max-height: calc(100vh - 36px);
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid #d0d0d0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+            padding: 14px 16px;
+            font-family: Arial, sans-serif;
+            color: #222222;
+        }
+        #transmission-network-panel h1 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+            line-height: 1.25;
+        }
+        .network-subtitle {
+            margin-bottom: 8px;
+            color: #555555;
+            font-size: 13px;
+        }
+        .network-summary {
+            margin-bottom: 12px;
+            color: #555555;
+            font-size: 12px;
+        }
+        .network-legend-section { margin-top: 12px; }
+        .network-legend-heading {
+            margin-bottom: 7px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .network-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0;
+            font-size: 12px;
+        }
+        .network-colour {
+            display: inline-block;
+            width: 13px;
+            height: 13px;
+            border: 1px solid #444444;
+            border-radius: 50%;
+            flex: 0 0 auto;
+        }
+        .network-shape-symbol {
+            display: inline-flex;
+            width: 20px;
+            height: 20px;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+        }
+        .network-shape-svg {
+            display: block;
+            width: 18px;
+            height: 18px;
+            overflow: visible;
+        }
+        .network-note {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #dddddd;
+            color: #555555;
+            font-size: 11px;
+            line-height: 1.35;
+        }
+        #mynetwork { height: 100vh !important; }
+    </style>
+    <div id="transmission-network-panel">
+        <h1>Transmission-cluster network</h1>
+        <div class="network-subtitle">
+            ST:
+            <strong>344</strong>
+        </div>
+        <div class="network-summary">
+            2 clustered isolates · 1 transmission clusters
+        </div>
+        <div class="network-legend-section">
+            <div class="network-legend-heading">Transmission cluster</div>
+            <div class="network-legend-item"><span class="network-colour" style="background:#f77189;"></span><span>1</span></div>
+        </div>
+        
+        <div class="network-legend-section">
+            <div class="network-legend-heading">FacilityCode</div>
+            <div class="network-legend-item"><span class="network-shape-symbol"><svg class="network-shape-svg" viewBox="0 0 20 20" aria-hidden="true"><g fill="#777777" stroke="#444444" stroke-width="1.4"><circle cx="10" cy="10" r="7" /></g></svg></span><span>NEW</span></div>
+        </div>
+        
+        <div class="network-note">
+            <strong>How to interpret this network</strong><br><br>
+                Nodes represent isolates assigned to the same inferred transmission
+                cluster. Edges form a minimum spanning tree based on SNP distance
+                for visualization and do not represent direct transmission or
+                necessarily satisfy the configured temporal cutoff of
+                45 days.<br><br>
+                Transmission-cluster membership may reflect a qualifying chain
+                through intermediate isolates. Solid edges connect isolates whose
+                direct collection-date difference is within the temporal cutoff.
+                Dashed edges connect isolates whose direct collection-date
+                difference exceeds the cutoff.<br><br>
+                Review the corresponding transmission scatterplot for the temporal
+                distribution and possible time-based chain of cases. Hover over
+                nodes and edges for metadata and distance details.
+
+        </div>
+    </div>
+    
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"borderWidth": 1.5, "color": {"background": "#f77189", "border": "#444444", "highlight": {"background": "#f77189", "border": "#000000"}}, "font": {"color": "#222222"}, "id": "S336", "label": "S336", "shape": "dot", "size": 18, "title": "\u003cb\u003eSample:\u003c/b\u003e S336\u003cbr\u003e\u003cb\u003eTransmission cluster:\u003c/b\u003e 1\u003cbr\u003e\u003cb\u003eST:\u003c/b\u003e 344\u003cbr\u003e\u003cb\u003eFacilityCode:\u003c/b\u003e NEW\u003cbr\u003e\u003cb\u003eST:\u003c/b\u003e 344\u003cbr\u003e\u003cb\u003eSamplingDate:\u003c/b\u003e 2/8/18\u003cbr\u003e\u003cb\u003e_core_context:\u003c/b\u003e 344\u003cbr\u003e\u003cb\u003ecore_cluster_label:\u003c/b\u003e 344__1\u003cbr\u003e\u003cb\u003eSNPs:\u003c/b\u003e 1.0\u003cbr\u003e\u003cb\u003eDays:\u003c/b\u003e 0.0\u003cbr\u003e\u003cb\u003eCluster_Cases_count:\u003c/b\u003e 2.0"}, {"borderWidth": 1.5, "color": {"background": "#f77189", "border": "#444444", "highlight": {"background": "#f77189", "border": "#000000"}}, "font": {"color": "#222222"}, "id": "S349", "label": "S349", "shape": "dot", "size": 18, "title": "\u003cb\u003eSample:\u003c/b\u003e S349\u003cbr\u003e\u003cb\u003eTransmission cluster:\u003c/b\u003e 1\u003cbr\u003e\u003cb\u003eST:\u003c/b\u003e 344\u003cbr\u003e\u003cb\u003eFacilityCode:\u003c/b\u003e NEW\u003cbr\u003e\u003cb\u003eST:\u003c/b\u003e 344\u003cbr\u003e\u003cb\u003eSamplingDate:\u003c/b\u003e 2/8/18\u003cbr\u003e\u003cb\u003e_core_context:\u003c/b\u003e 344\u003cbr\u003e\u003cb\u003ecore_cluster_label:\u003c/b\u003e 344__1\u003cbr\u003e\u003cb\u003eSNPs:\u003c/b\u003e 1.0\u003cbr\u003e\u003cb\u003eDays:\u003c/b\u003e 0.0\u003cbr\u003e\u003cb\u003eCluster_Cases_count:\u003c/b\u003e 2.0"}]);
+                  edges = new vis.DataSet([{"color": "#888888", "from": "S336", "label": "1", "length": 67.5, "title": "SNP distance: 1\u003cbr\u003eCollection-date difference: 0 days", "to": "S349", "width": 1.4}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"physics": {"enabled": true, "solver": "forceAtlas2Based", "forceAtlas2Based": {"gravitationalConstant": -70, "centralGravity": 0.008, "springLength": 120, "springConstant": 0.05, "damping": 0.55, "avoidOverlap": 0.8}, "stabilization": {"enabled": true, "iterations": 700, "fit": true}}, "interaction": {"hover": true, "navigationButtons": true, "keyboard": true, "multiselect": true}, "nodes": {"font": {"size": 12, "face": "Arial"}}, "edges": {"smooth": false, "font": {"size": 10, "align": "middle"}}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

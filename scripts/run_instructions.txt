@@ -1,0 +1,6 @@
+python generate_figure2_context_comparison.py \
+  --st-only-core ST_only/core_snp_clusters.csv \
+  --facility-st-core Facility_ST/core_snp_clusters.csv \
+  --metadata bgerms_study_metadata_klepp.csv \
+  --facility-order "Hospital A,Hospital B,Hospital C,Hospital D,Hospital E,Hospital F" \
+  --outdir figure2_outputs
