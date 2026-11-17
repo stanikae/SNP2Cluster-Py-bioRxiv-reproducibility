@@ -1,0 +1,140 @@
+YAML-AWARE STATIC NETWORK EXPORT
+================================
+
+Purpose
+-------
+Generate publication-quality static transmission networks from the node
+and edge tables produced by SNP2Cluster-Py. Dataset-specific variables
+are read from the YAML configuration used for the preceding analysis.
+
+The workflow supports datasets with different configured columns, for
+example:
+
+Hospital C:
+    main_var: hospital
+    var_01: ward_type
+    var_02: specimen_collection_date
+
+Ghana pneumococcal dataset:
+    main_var: ST
+    var_01: FacilityCode
+    var_02: SamplingDate
+
+The exporter uses:
+    - variables.main_var to identify the analysis grouping;
+    - variables.var_01 for node shape;
+    - variables.var_02 as the collection-date variable;
+    - transmission cluster for node colour;
+    - SNP distance for edge labels;
+    - the configured days_cutoff for solid/dashed edge interpretation.
+
+Required scripts
+----------------
+scripts/configured_columns.py
+scripts/export_transmission_network_static_yaml.py
+
+Required Python packages
+------------------------
+pandas
+PyYAML
+matplotlib
+networkx
+
+Run from the SNP2Cluster-Py repository root
+-------------------------------------------
+
+1. Define the reproducibility repository
+
+    REPRO="../SNP2Cluster-Py-bioRxiv-reproducibility"
+
+2. Validate the scripts
+
+    python -m py_compile \
+      "$REPRO/scripts/configured_columns.py" \
+      "$REPRO/scripts/export_transmission_network_static_yaml.py"
+
+    python \
+      "$REPRO/scripts/export_transmission_network_static_yaml.py" \
+      --help
+
+3. Define inputs from one completed analysis run
+
+    ANALYSIS_CONFIG="path/to/config.yaml"
+    ANALYSIS_RUN="runs/exact-run-directory"
+
+    NETWORK_NODES="$ANALYSIS_RUN/tables/transmission_network_nodes.csv"
+    NETWORK_EDGES="$ANALYSIS_RUN/tables/transmission_network_edges.csv"
+
+    test -f "$ANALYSIS_CONFIG" || exit 1
+    test -f "$NETWORK_NODES" || exit 1
+    test -f "$NETWORK_EDGES" || exit 1
+
+4. Inspect available network groups
+
+    python -c 'import pandas as pd,sys; d=pd.read_csv(sys.argv[1],dtype=str); print(d["network_group"].value_counts().to_string())' \
+      "$NETWORK_NODES"
+
+5. Export one network
+
+    NETWORK_GROUP="exact-network-group-value"
+    OUTPUT_PREFIX="publication_network_name"
+    OUTPUT_DIR="manuscript_outputs/networks"
+
+    mkdir -p "$OUTPUT_DIR"
+
+    python \
+      "$REPRO/scripts/export_transmission_network_static_yaml.py" \
+      --config "$ANALYSIS_CONFIG" \
+      --nodes "$NETWORK_NODES" \
+      --edges "$NETWORK_EDGES" \
+      --network-group "$NETWORK_GROUP" \
+      --seed 42 \
+      --dpi 600 \
+      --width 10 \
+      --height 7 \
+      --output-prefix "$OUTPUT_PREFIX" \
+      --outdir "$OUTPUT_DIR"
+
+Expected outputs
+----------------
+<OUTPUT_PREFIX>.png
+<OUTPUT_PREFIX>.pdf
+<OUTPUT_PREFIX>.svg
+
+Expected terminal summary
+-------------------------
+Config: <YAML path>
+Network group: <selected group>
+Sample ID column: <resolved from YAML/output table>
+Shape column: <variables.var_01 resolved in output table>
+Shape categories: [...]
+Transmission clusters: [...]
+Isolates: <count>
+Edges: <count>
+Output base: <path>
+
+Interpretation
+--------------
+Node colour represents transmission-cluster membership.
+Node shape represents the configured variables.var_01 value.
+Edge labels represent SNP distance.
+Solid edges represent direct collection-date differences at or below
+analysis.days_cutoff.
+Dashed edges represent direct collection-date differences above
+analysis.days_cutoff.
+Edges are minimum-spanning-tree relationships for visualisation and do
+not imply direct or directional transmission.
+
+Reproducibility requirements
+----------------------------
+Preserve:
+    - YAML configuration;
+    - run_manifest.json;
+    - transmission_network_nodes.csv;
+    - transmission_network_edges.csv;
+    - exporter script;
+    - PNG, PDF and SVG exports;
+    - software tag and Git commit.
+
+Use PDF as the publication master, SVG as the editable vector archive,
+and 600 dpi PNG for Word and bioRxiv manuscript insertion.

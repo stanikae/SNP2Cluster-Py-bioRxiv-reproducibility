@@ -1,0 +1,303 @@
+FIGURE 4 REPRODUCIBLE GENERATION
+================================
+
+Purpose
+-------
+Generate the final four-panel Figure 4 for the Ghana pneumococcal
+Community analysis using SNP2Cluster-Py v1.1.2 outputs.
+
+Final selected lineages
+-----------------------
+ST802:
+    12 transmission-clustered isolates
+    1 Community transmission cluster
+    6 sampling locations: AME, DAN, GS, H1, NEW and UIC
+
+ST5103:
+    7 transmission-clustered isolates
+    1 Community transmission cluster
+    5 sampling locations: GS, IMA, KAK, NEW and PEDU
+
+Final panel layout
+------------------
+A. ST802 temporal scatterplot  | B. ST802 Community network
+C. ST5103 temporal scatterplot | D. ST5103 Community network
+
+Required version
+----------------
+SNP2Cluster-Py v1.1.2
+Release commit:
+    a4535d47beecfde1d6dc66097e0b78580032afc6
+
+Required configuration
+----------------------
+biorxiv/data/ghana-spneumo-study/configs/community-context_config.yaml
+
+Configured analysis settings
+----------------------------
+    cluster_type: Transmission
+    transmission_level: Community
+    core_cluster_context: [ST]
+    main_var: ST
+    var_01: FacilityCode
+    var_02: SamplingDate
+    snp_cutoff: 12
+    days_cutoff: 45
+    date_format: mdy
+
+Required scripts
+----------------
+scripts/configured_columns.py
+scripts/export_transmission_network_static_yaml.py
+scripts/compose_figure4.py
+scripts/select_figure4_candidate_st.py
+
+Run from the SNP2Cluster-Py repository root
+-------------------------------------------
+
+1. Confirm the release
+
+    git switch main
+    git pull --ff-only origin main
+
+    python -m src.snp2cluster.cli version
+    git describe --tags --exact-match
+    git rev-parse HEAD
+
+Expected:
+    1.1.2
+    v1.1.2
+    a4535d47beecfde1d6dc66097e0b78580032afc6
+
+2. Define paths
+
+    REPRO="../SNP2Cluster-Py-bioRxiv-reproducibility"
+
+    SP_GHANA_COMMUNITY_CONFIG="biorxiv/data/ghana-spneumo-study/configs/community-context_config.yaml"
+
+    SP_GHANA_COMMUNITY_RUN="runs/spneumoniae-community-level-transmission-analysis_20261117T130511Z"
+
+    FIGURE4_ROOT="manuscript_v1.1.2_outputs/figure4"
+
+    NETWORK_NODES="$SP_GHANA_COMMUNITY_RUN/tables/transmission_network_nodes.csv"
+    NETWORK_EDGES="$SP_GHANA_COMMUNITY_RUN/tables/transmission_network_edges.csv"
+
+3. Validate required files and scripts
+
+    for INPUT in \
+      "$SP_GHANA_COMMUNITY_CONFIG" \
+      "$NETWORK_NODES" \
+      "$NETWORK_EDGES" \
+      "$REPRO/scripts/configured_columns.py" \
+      "$REPRO/scripts/export_transmission_network_static_yaml.py" \
+      "$REPRO/scripts/compose_figure4.py"
+    do
+      test -f "$INPUT" || {
+        echo "ERROR: Missing required input: $INPUT"
+        exit 1
+      }
+    done
+
+    python -m py_compile \
+      "$REPRO/scripts/configured_columns.py" \
+      "$REPRO/scripts/export_transmission_network_static_yaml.py" \
+      "$REPRO/scripts/compose_figure4.py"
+
+4. Create directories
+
+    mkdir -p \
+      "$FIGURE4_ROOT/panels" \
+      "$FIGURE4_ROOT/networks" \
+      "$FIGURE4_ROOT/composite"
+
+    rm -f "$FIGURE4_ROOT/.DS_Store"
+
+5. Copy scatterplot panels
+
+    cp \
+      "$SP_GHANA_COMMUNITY_RUN/figures/02_transmission_scatter_ST_802.png" \
+      "$FIGURE4_ROOT/panels/Figure4A_ST802_temporal_scatter.png"
+
+    cp \
+      "$SP_GHANA_COMMUNITY_RUN/figures/02_transmission_scatter_ST_5103.png" \
+      "$FIGURE4_ROOT/panels/Figure4C_ST5103_temporal_scatter.png"
+
+6. Verify selected network groups
+
+    python -c 'import pandas as pd,sys; d=pd.read_csv(sys.argv[1],dtype=str); print(d[d["network_group"].isin(["802","5103"])]["network_group"].value_counts().to_string())' \
+      "$NETWORK_NODES"
+
+Expected:
+    802     12
+    5103     7
+
+7. Export ST802 Community network
+
+    python \
+      "$REPRO/scripts/export_transmission_network_static_yaml.py" \
+      --config "$SP_GHANA_COMMUNITY_CONFIG" \
+      --nodes "$NETWORK_NODES" \
+      --edges "$NETWORK_EDGES" \
+      --network-group "802" \
+      --seed 42 \
+      --dpi 600 \
+      --width 10 \
+      --height 7 \
+      --output-prefix "Figure4B_ST802_Community_network" \
+      --outdir "$FIGURE4_ROOT/networks"
+
+Expected schema resolution:
+    Shape column: FacilityCode
+    Transmission clusters: ['1']
+    Isolates: 12
+
+8. Export ST5103 Community network
+
+    python \
+      "$REPRO/scripts/export_transmission_network_static_yaml.py" \
+      --config "$SP_GHANA_COMMUNITY_CONFIG" \
+      --nodes "$NETWORK_NODES" \
+      --edges "$NETWORK_EDGES" \
+      --network-group "5103" \
+      --seed 42 \
+      --dpi 600 \
+      --width 10 \
+      --height 7 \
+      --output-prefix "Figure4D_ST5103_Community_network" \
+      --outdir "$FIGURE4_ROOT/networks"
+
+Expected schema resolution:
+    Shape column: FacilityCode
+    Transmission clusters: ['1']
+    Isolates: 7
+
+9. Confirm source panels
+
+    find "$FIGURE4_ROOT" \
+      -maxdepth 2 \
+      -type f \
+      -print |
+    sort
+
+Required PNG panels:
+    panels/Figure4A_ST802_temporal_scatter.png
+    networks/Figure4B_ST802_Community_network.png
+    panels/Figure4C_ST5103_temporal_scatter.png
+    networks/Figure4D_ST5103_Community_network.png
+
+10. Generate the Figure 4 composite
+
+The current compositor retains historical argument names for its lower
+row. The files supplied to those arguments are the final ST5103 panels.
+
+    rm -f \
+      "$FIGURE4_ROOT/composite/"Figure4_Ghana_Community_analysis.*
+
+    python \
+      "$REPRO/scripts/compose_figure4.py" \
+      --st802-scatter \
+      "$FIGURE4_ROOT/panels/Figure4A_ST802_temporal_scatter.png" \
+      --st802-network \
+      "$FIGURE4_ROOT/networks/Figure4B_ST802_Community_network.png" \
+      --st5541-scatter \
+      "$FIGURE4_ROOT/panels/Figure4C_ST5103_temporal_scatter.png" \
+      --st5541-network \
+      "$FIGURE4_ROOT/networks/Figure4D_ST5103_Community_network.png" \
+      --dpi 600 \
+      --outdir "$FIGURE4_ROOT/composite"
+
+Expected layout:
+    A. ST802 scatterplot | B. ST802 network
+    C. ST5103 scatterplot| D. ST5103 network
+
+11. Confirm final outputs
+
+    find "$FIGURE4_ROOT/composite" \
+      -maxdepth 1 \
+      -type f \
+      -print |
+    sort
+
+Expected:
+    Figure4_Ghana_Community_analysis.png
+    Figure4_Ghana_Community_analysis.pdf
+    Figure4_Ghana_Community_analysis.svg
+
+12. Open for review on macOS
+
+    open \
+      "$FIGURE4_ROOT/composite/Figure4_Ghana_Community_analysis.png"
+
+    open \
+      "$FIGURE4_ROOT/composite/Figure4_Ghana_Community_analysis.pdf"
+
+13. Figure-locking criteria
+
+Panel A:
+    - ST802 temporal and geographical distribution;
+    - Community-clustered and unclustered isolates;
+    - FacilityCode on the vertical axis;
+    - 12-SNP and 45-day settings.
+
+Panel B:
+    - 12 clustered ST802 isolates;
+    - one Community transmission cluster;
+    - six FacilityCode shape categories;
+    - SNP-distance edge labels;
+    - solid/dashed temporal-edge styling.
+
+Panel C:
+    - ST5103 temporal and geographical distribution;
+    - Community-clustered and unclustered isolates;
+    - FacilityCode on the vertical axis;
+    - 12-SNP and 45-day settings.
+
+Panel D:
+    - seven clustered ST5103 isolates;
+    - one Community transmission cluster;
+    - five FacilityCode shape categories;
+    - SNP-distance edge labels;
+    - solid/dashed temporal-edge styling.
+
+Panel labels must not overlap titles, data or legends.
+All labels must remain readable in the PDF at final publication width.
+
+14. Final manuscript caption
+
+Figure 4. Community-level analysis of pneumococcal carriage isolates
+across sampling locations. (A) Temporal and geographical distribution
+of ST802 isolates across AME, DAN, GS, H1, NEW and UIC. (B) Genomic
+relationships among 12 transmission-clustered ST802 isolates
+represented as a single Community network spanning six sampling
+locations. (C) Temporal and geographical distribution of ST5103
+isolates across GS, IMA, KAK, NEW and PEDU. (D) Genomic relationships
+among seven transmission-clustered ST5103 isolates represented as a
+single Community network spanning five sampling locations. Community
+clusters were identified using a 12-SNP threshold and a 45-day temporal
+window. Node colours indicate Community-cluster assignment, node shapes
+indicate sampling location, and edges show within-cluster
+minimum-spanning-tree relationships labelled by SNP distance. Solid
+edges connect isolates whose direct collection-date difference is
+within 45 days, whereas dashed edges connect isolates whose direct date
+difference exceeds 45 days. Network edges support visual interpretation
+and do not imply direct or directional transmission.
+
+15. Archival outputs
+
+Preserve:
+    - Ghana Community YAML configuration;
+    - run_manifest.json;
+    - transmission cluster tables;
+    - network node and edge tables;
+    - original scatterplots;
+    - static network PNG, PDF and SVG files;
+    - composite PNG, PDF and SVG files;
+    - configured_columns.py;
+    - YAML-aware exporter;
+    - Figure 4 compositor;
+    - candidate-selection table and script;
+    - these run instructions;
+    - SNP2Cluster-Py tag v1.1.2 and release commit.
+
+Use PDF as the publication-quality master, SVG as the editable vector
+archive, and the 600 dpi PNG for Word and bioRxiv manuscript insertion.
