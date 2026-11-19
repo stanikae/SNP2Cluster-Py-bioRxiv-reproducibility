@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: >-
+  If you use the exact analyses, configurations, scripts, or outputs in this
+  repository, please cite this reproducibility archive, the SNP2Cluster-Py
+  software archive, and the associated manuscript.
+title: "SNP2Cluster-Py bioRxiv reproducibility archive"
+type: dataset
+version: "1.1.2"
+date-released: 2026-11-19
+license: Apache-2.0
+repository-code: "https://github.com/stanikae/SNP2Cluster-Py-bioRxiv-reproducibility"
+url: "https://github.com/stanikae/SNP2Cluster-Py-bioRxiv-reproducibility"
+authors:
+  - family-names: Kwenda
+    given-names: Stanford
+  - family-names: Christoffels
+    given-names: Alan
+keywords:
+  - genomic epidemiology
+  - Core SNP clustering
+  - transmission clusters
+  - pathogen genomics
+  - reproducible research
+  - bioinformatics
+references:
+  - type: software
+    title: "SNP2Cluster-Py"
+    version: "1.1.2"
+    repository-code: "https://github.com/stanikae/snp2cluster-py"
+    identifiers:
+      - type: doi
+        value: "10.5281/zenodo.23045861"
+        description: "SNP2Cluster-Py software archive"
