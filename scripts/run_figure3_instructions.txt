@@ -1,0 +1,321 @@
+FIGURE 3 REPRODUCIBLE GENERATION
+================================
+
+Purpose
+-------
+Generate the final three-panel Figure 3 for the single-hospital
+Klebsiella pneumoniae Facility analysis.
+
+Final layout:
+
+    A. Temporal scatterplot | B. Core SNP heatmap
+    C. Network              | B. Core SNP heatmap
+
+Panel B spans the complete right-hand column.
+
+Required version
+----------------
+SNP2Cluster-Py v1.1.2
+
+Release commit:
+
+    a4535d47beecfde1d6dc66097e0b78580032afc6
+
+Required configuration
+----------------------
+biorxiv/data/hospitalC_kpneumo/
+transmission-with-core-context_config-Facility-ST.yaml
+
+Required analytical settings:
+
+    cluster_type: Transmission
+    transmission_level: Facility
+    core_cluster_context: [MainVar, ST]
+    snp_cutoff: 11
+    days_cutoff: 14
+    date_format: mdy
+
+Required scripts
+----------------
+scripts/export_transmission_network_static.py
+scripts/compose_figure3.py
+
+
+1. Confirm the software release
+-------------------------------
+
+Run from the SNP2Cluster-Py repository root:
+
+    git switch main
+    git pull --ff-only origin main
+
+    python -m src.snp2cluster.cli version
+    git describe --tags --exact-match
+    git rev-parse HEAD
+
+Expected:
+
+    1.1.2
+    v1.1.2
+    a4535d47beecfde1d6dc66097e0b78580032afc6
+
+
+2. Define paths
+---------------
+
+    REPRO="../SNP2Cluster-Py-bioRxiv-reproducibility"
+
+    HOSPITAL_C_CONFIG="biorxiv/data/hospitalC_kpneumo/transmission-with-core-context_config-Facility-ST.yaml"
+
+    FIGURE3_ROOT="manuscript_v1.1.2_outputs/figure3"
+
+Confirm that the inputs exist:
+
+    test -f "$HOSPITAL_C_CONFIG" || exit 1
+
+    test -f \
+      "$REPRO/scripts/export_transmission_network_static.py" \
+      || exit 1
+
+    test -f \
+      "$REPRO/scripts/compose_figure3.py" \
+      || exit 1
+
+
+3. Run the Hospital C [MainVar, ST] analysis
+-------------------------------------------
+
+    mkdir -p manuscript_v1.1.2_logs
+
+    python -m src.snp2cluster.cli run \
+      --config "$HOSPITAL_C_CONFIG" \
+      2>&1 |
+    tee manuscript_v1.1.2_logs/kpneumo_hospital_c_mainvar_st.log
+
+Copy the exact base directory printed by the run:
+
+    KP_HOSPITAL_C_FACILITY_ST_RUN="runs/PASTE_THE_EXACT_RUN_DIRECTORY"
+
+Do not continue while the variable contains PASTE:
+
+    case "$KP_HOSPITAL_C_FACILITY_ST_RUN" in
+      *PASTE*)
+        echo "ERROR: Set the actual run directory."
+        exit 1
+        ;;
+    esac
+
+Confirm:
+
+    test -d "$KP_HOSPITAL_C_FACILITY_ST_RUN" || exit 1
+
+
+4. Expected validated results
+-----------------------------
+
+The final analysis should contain:
+
+    36 analysed isolates
+    30 Core-clustered isolates
+    5 Core SNP clusters
+    23 transmission-clustered isolates
+    4 Facility transmission clusters
+
+Core contexts must use the combined Facility + ST form, for example:
+
+    Hospital C__307
+
+Core cluster identifiers must use labels such as:
+
+    Hospital C__307__1
+
+
+5. Create Figure 3 directories
+------------------------------
+
+    mkdir -p \
+      "$FIGURE3_ROOT/panels" \
+      "$FIGURE3_ROOT/network" \
+      "$FIGURE3_ROOT/composite"
+
+
+6. Copy Panels A and B
+----------------------
+
+Panel A is the temporal scatterplot:
+
+    cp \
+      "$KP_HOSPITAL_C_FACILITY_ST_RUN/figures/02_transmission_scatter_Hospital_C.png" \
+      "$FIGURE3_ROOT/panels/Figure3_temporal_scatter.png"
+
+Panel B is the Core SNP heatmap:
+
+    cp \
+      "$KP_HOSPITAL_C_FACILITY_ST_RUN/figures/03_core_heatmap.png" \
+      "$FIGURE3_ROOT/panels/Figure3_core_heatmap.png"
+
+Confirm:
+
+    ls -lh "$FIGURE3_ROOT/panels"
+
+
+7. Define network tables
+------------------------
+
+    NETWORK_NODES="$KP_HOSPITAL_C_FACILITY_ST_RUN/tables/transmission_network_nodes.csv"
+
+    NETWORK_EDGES="$KP_HOSPITAL_C_FACILITY_ST_RUN/tables/transmission_network_edges.csv"
+
+Confirm:
+
+    test -f "$NETWORK_NODES" || exit 1
+    test -f "$NETWORK_EDGES" || exit 1
+
+
+8. Generate static Panel C
+--------------------------
+
+    python \
+      "$REPRO/scripts/export_transmission_network_static.py" \
+      --nodes "$NETWORK_NODES" \
+      --edges "$NETWORK_EDGES" \
+      --network-group "Hospital C" \
+      --seed 42 \
+      --dpi 600 \
+      --outdir "$FIGURE3_ROOT/network"
+
+Expected outputs:
+
+    Figure3C_transmission_network_Hospital_C.png
+    Figure3C_transmission_network_Hospital_C.pdf
+    Figure3C_transmission_network_Hospital_C.svg
+
+Confirm:
+
+    find "$FIGURE3_ROOT/network" \
+      -maxdepth 1 \
+      -type f \
+      -print |
+    sort
+
+
+9. Generate the final composite
+-------------------------------
+
+    python \
+      "$REPRO/scripts/compose_figure3.py" \
+      --heatmap \
+      "$FIGURE3_ROOT/panels/Figure3_core_heatmap.png" \
+      --scatter \
+      "$FIGURE3_ROOT/panels/Figure3_temporal_scatter.png" \
+      --network \
+      "$FIGURE3_ROOT/network/Figure3C_transmission_network_Hospital_C.png" \
+      --dpi 600 \
+      --outdir "$FIGURE3_ROOT/composite"
+
+Expected layout version:
+
+    scatter-left-top_heatmap-right_network-left-bottom_v1
+
+Expected outputs:
+
+    Figure3_Hospital_C_Facility_analysis.png
+    Figure3_Hospital_C_Facility_analysis.pdf
+    Figure3_Hospital_C_Facility_analysis.svg
+
+
+10. Inspect the final outputs
+-----------------------------
+
+    open \
+      "$FIGURE3_ROOT/composite/Figure3_Hospital_C_Facility_analysis.png"
+
+    open \
+      "$FIGURE3_ROOT/composite/Figure3_Hospital_C_Facility_analysis.pdf"
+
+Confirm the files:
+
+    ls -lh \
+      "$FIGURE3_ROOT/composite/"Figure3_Hospital_C_Facility_analysis.*
+
+
+11. Figure-locking criteria
+---------------------------
+
+Panel A must show:
+
+    - four Facility transmission clusters;
+    - transmission-unclustered isolates;
+    - sequence type;
+    - epidemiological week;
+    - ward-type shape;
+    - 11-SNP and 14-day parameters.
+
+Panel B must show:
+
+    - all 36 isolates;
+    - five authoritative Core SNP clusters;
+    - Facility + ST Core labels;
+    - hospital, ward type, ST, Core-cluster and
+      transmission-cluster annotation strips;
+    - SNP-distance scale;
+    - readable isolate labels.
+
+Panel C must show:
+
+    - 23 isolates;
+    - four transmission clusters;
+    - node colour representing transmission cluster;
+    - node shape representing ward type;
+    - edge labels representing SNP distance;
+    - solid edges for direct date differences of 14 days or less;
+    - dashed edges for direct date differences above 14 days.
+
+Network edges are within-cluster minimum-spanning-tree relationships.
+Network edges do not imply direct or directional transmission.
+
+
+12. Final manuscript caption
+----------------------------
+
+Figure 3. Facility-level analysis of Klebsiella pneumoniae isolates
+from the single-hospital subset. (A) Temporal distribution of four
+Facility transmission clusters and transmission-unclustered isolates
+across the represented sequence types. Core-clustered isolates that
+did not satisfy the temporal criterion are retained to provide
+epidemiological context. (B) Pairwise Core SNP-distance heatmap
+showing genomic relationships and Facility + ST Core-cluster
+assignments among 36 isolates. Thirty isolates were assigned to five
+Core SNP clusters. (C) Transmission-cluster network showing 23
+isolates in four clusters identified using an 11-SNP threshold and a
+14-day temporal window. Node shapes indicate ward type, node colours
+indicate transmission-cluster assignment, and edges show
+within-cluster minimum-spanning-tree relationships labelled by SNP
+distance. Solid edges connect isolates whose direct collection-date
+difference is within 14 days, whereas dashed edges connect isolates
+whose direct date difference exceeds 14 days. Network edges support
+visual interpretation and do not imply direct or directional
+transmission.
+
+
+13. Archival files
+------------------
+
+Preserve:
+
+    - the YAML configuration;
+    - run_manifest.json;
+    - Core and transmission cluster tables;
+    - transmission network node and edge tables;
+    - original pipeline-generated heatmap and scatterplot;
+    - static network PNG, PDF and SVG;
+    - final composite PNG, PDF and SVG;
+    - both Figure 3 scripts;
+    - these run instructions;
+    - SNP2Cluster-Py tag v1.1.2 and its release commit.
+
+Use:
+
+    PDF: publication-quality master
+    SVG: editable vector archive
+    PNG: Word and bioRxiv manuscript insertion

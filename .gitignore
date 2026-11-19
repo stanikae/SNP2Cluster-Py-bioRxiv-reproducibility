@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Python environments and caches
+.venv*/
+__pycache__/
+*.py[cod]
+
+# Local build inputs and temporary files
+supplementary_source_bundle/
+supplementary_source_bundle.zip
+_supplementary_build_tmp/
+*.bak
+*.truncated
+*.before_*
+*.figure3_backup
+
+# Logs and local editor files
+*.log
+*~
+
+.publication-path-backup/

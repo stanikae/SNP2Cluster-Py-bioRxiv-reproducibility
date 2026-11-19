@@ -1,0 +1,11 @@
+cluster,cluster_avg_width,keep,selection_method,hospital
+1,0.4034500000399954,False,exploratory_silhouette,Hospital C
+2,0.0,False,exploratory_silhouette,Hospital C
+1,0.0,False,exploratory_silhouette,Hospital C
+2,1.0,True,exploratory_silhouette,Hospital C
+3,0.18350341907227385,False,exploratory_silhouette,Hospital C
+4,1.0,True,exploratory_silhouette,Hospital C
+1,,True,single_cluster_solution,Hospital C
+1,0.4007262422574324,False,exploratory_silhouette,Hospital C
+2,0.0,False,exploratory_silhouette,Hospital C
+1,,True,single_cluster_solution,Hospital C

@@ -1,0 +1,43 @@
+{
+  "tool": "SNP2Cluster-Py",
+  "version": "1.1.2",
+  "project_name": "Spneumoniae-Community-Level-Transmission-Analysis",
+  "run_directory": "runs/spneumoniae-community-level-transmission-analysis_20261117T130511Z",
+  "timestamp_utc": "2026-11-17T13:05:11.820048+00:00",
+  "python_version": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:11:29) [Clang 20.1.8 ]",
+  "platform": "macOS-27.2-arm64-arm-64bit-Mach-O",
+  "input_files": {
+    "metadata": "data/spneumoniae/Genome_Pneumo_Metadata.csv",
+    "snp_matrix": "data/spneumoniae/snps.coresites.01.SNPmatrix.cleaned_without_S158.csv",
+    "mlst_profile": "data/spneumoniae/Genome_Pneumo_Metadata.csv"
+  },
+  "columns": {
+    "sample_id": "IDs",
+    "sequence_type": "ST",
+    "st_sample_id": "IDs"
+  },
+  "analysis_parameters": {
+    "cluster_type": "Transmission",
+    "transmission_level": "Community",
+    "core_cluster_context": [
+      "ST"
+    ],
+    "snp_cutoff": 12,
+    "days_cutoff": 45,
+    "n_bootstraps": 500,
+    "random_seed": 42,
+    "date_format": "mdy",
+    "max_k": null,
+    "engine": "r_compatible"
+  },
+  "validation_messages": [],
+  "dependency_versions": {
+    "pandas": "3.0.6",
+    "numpy": "2.5.3",
+    "sklearn": "1.9.1",
+    "scipy": "1.18.1",
+    "networkx": "3.7",
+    "matplotlib": "3.11.2",
+    "seaborn": "0.13.2"
+  }
+}
